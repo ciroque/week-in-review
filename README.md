@@ -40,7 +40,7 @@ docker run --rm \
 week-in-review [flags]
 
 Flags:
-  --repo string          Git repository to inspect (default ".")
+  --init                 Initialize a new journal and exit\n  --repo string          Git repository to inspect (default ".")
   --output string        Journal path, relative to --repo (default "WEEK-IN-REVIEW.md")
   --timezone string      IANA timezone used for reporting boundaries (default "America/Los_Angeles")
   --week-ending string   Sunday ending the reporting week, YYYY-MM-DD; defaults to the most recently completed Sunday
