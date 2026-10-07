@@ -68,9 +68,16 @@ week-in-review \
 - Calendar boundaries are evaluated in the configured IANA timezone.
 - Binary-file numstat entries are ignored for line totals.
 
-## GitHub Actions
+## CI/CD examples
 
-A scheduled workflow can invoke the published image after checking out full history. For provenance-sensitive use, pin a released image tag rather than `:latest`.
+Ready-to-adapt examples are included for both major hosting platforms:
+
+- `examples/github-actions.yml` — scheduled GitHub Actions workflow using `GITHUB_TOKEN` to commit and push the journal.
+- `examples/gitlab-ci.yml` — scheduled GitLab pipeline using a `WEEK_IN_REVIEW_PUSH_TOKEN` CI/CD variable with `write_repository` permission.
+
+Both examples fetch full Git history, run `week-in-review`, and commit `WEEK-IN-REVIEW.md` only when it changes.
+
+For provenance-sensitive use, pin a released container image tag rather than `:latest`.
 
 ## License
 
