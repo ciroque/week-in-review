@@ -37,6 +37,14 @@ func TestActivity(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	first, err := repo.FirstCommitTime("HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "2026-10-05T10:01:00-07:00"; first.Format(time.RFC3339) != want {
+		t.Fatalf("first commit time = %s, want %s", first.Format(time.RFC3339), want)
+	}
+
 	start := mustParse(t, "2026-10-05T00:00:00-07:00")
 	end := mustParse(t, "2026-10-12T00:00:00-07:00")
 
