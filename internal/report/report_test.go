@@ -66,6 +66,20 @@ func TestPeriodsFromFirstCommitThroughLastCompletedWeek(t *testing.T) {
 	}
 }
 
+func TestPeriodsThroughIncludesCurrentIncompleteWeek(t *testing.T) {
+	loc := time.UTC
+	first := time.Date(2026, 9, 30, 12, 0, 0, 0, loc)
+	through := time.Date(2026, 10, 7, 9, 0, 0, 0, loc)
+
+	got := PeriodsThrough(first, through, loc)
+	if len(got) != 2 {
+		t.Fatalf("periods = %d, want 2", len(got))
+	}
+	if want := "2026-10-11"; got[1].End.Format("2006-01-02") != want {
+		t.Fatalf("current period ends %s, want %s", got[1].End.Format("2006-01-02"), want)
+	}
+}
+
 func TestInitBuildsHistoryAndRefusesOverwrite(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "WEEK-IN-REVIEW.md")
 	loc := time.UTC
