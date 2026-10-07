@@ -52,50 +52,46 @@ func TestDefaultOnSundayUsesPriorSunday(t *testing.T) {
 	}
 }
 
-func TestInitCreatesEmptyJournal(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "WEEK-IN-REVIEW.md")
+func TestPeriodsFromFirstCommitThroughLastCompletedWeek(t *testing.T) {
+	loc := time.UTC
+	first := time.Date(2026, 9, 30, 12, 0, 0, 0, loc)
+	last := time.Date(2026, 10, 18, 0, 0, 0, 0, loc)
 
-	if err := Init(path, "America/Los_Angeles"); err != nil {
-		t.Fatal(err)
+	got := PeriodsFrom(first, last, loc)
+	if len(got) != 3 {
+		t.Fatalf("periods = %d, want 3", len(got))
 	}
-
-	body, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := string(body)
-
-	for _, want := range []string{
-		"# Week in Review",
-		"append-only chronological project journal",
-		"Reporting timezone: `America/Los_Angeles`.",
-	} {
-		if !strings.Contains(text, want) {
-			t.Fatalf("missing %q in:\n%s", want, text)
-		}
-	}
-
-	if strings.Contains(text, "## Week of") {
-		t.Fatalf("initialized journal unexpectedly contains a weekly entry:\n%s", text)
+	if got[0].Start.Format("2006-01-02") != "2026-09-28" || got[0].End.Format("2006-01-02") != "2026-10-04" {
+		t.Fatalf("unexpected first period: %s through %s", got[0].Start.Format("2006-01-02"), got[0].End.Format("2006-01-02"))
 	}
 }
 
-func TestInitRefusesToOverwriteExistingJournal(t *testing.T) {
+func TestInitBuildsHistoryAndRefusesOverwrite(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "WEEK-IN-REVIEW.md")
-	if err := os.WriteFile(path, []byte("existing\n"), 0o644); err != nil {
+	loc := time.UTC
+	period := PeriodForWeekEnding(time.Date(2026, 10, 11, 0, 0, 0, 0, loc), loc)
+	entries := []Entry{{
+		Period: period,
+		Activity: gitrepo.Activity{Commits: []gitrepo.Commit{{
+			SHA: "1234567890abcdef",
+			CommitTime: time.Date(2026, 10, 5, 10, 0, 0, 0, loc),
+			AuthorTime: time.Date(2026, 10, 5, 9, 59, 0, 0, loc),
+			Author: "Test User",
+			Subject: "first",
+		}}},
+	}}
+
+	if err := Init(path, "UTC", entries, time.Date(2026, 10, 12, 1, 0, 0, 0, loc)); err != nil {
 		t.Fatal(err)
 	}
-
-	if err := Init(path, "UTC"); err == nil {
-		t.Fatal("expected existing-file error")
-	}
-
 	body, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
+	if err != nil { t.Fatal(err) }
+	text := string(body)
+	for _, want := range []string{"# Week in Review", "## Week of 2026-10-05 through 2026-10-11", "`1234567`"} {
+		if !strings.Contains(text, want) { t.Fatalf("missing %q in:\n%s", want, text) }
 	}
-	if string(body) != "existing\n" {
-		t.Fatalf("existing journal was modified: %q", body)
+	if err := Init(path, "UTC", entries, time.Now()); err == nil {
+		t.Fatal("expected existing-file error")
 	}
 }
 
