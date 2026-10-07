@@ -39,10 +39,15 @@ func Open(path string) (*Repository, error) {
 func (r *Repository) Path() string { return r.path }
 
 func (r *Repository) FirstCommitTime(ref string) (time.Time, error) {
-	out, err := exec.Command("git", "-C", r.path, "log", "--reverse", "--format=%cI", "-1", ref).Output()
+	out, err := exec.Command("git", "-C", r.path, "rev-list", "--reverse", ref).Output()
 	if err != nil { return time.Time{}, fmt.Errorf("find first commit: %w", err) }
+	lines := strings.Fields(string(out))
+	if len(lines) == 0 { return time.Time{}, fmt.Errorf("ref %q has no commits", ref) }
+
+	firstSHA := lines[0]
+	out, err = exec.Command("git", "-C", r.path, "show", "-s", "--format=%cI", firstSHA).Output()
+	if err != nil { return time.Time{}, fmt.Errorf("read first commit time: %w", err) }
 	value := strings.TrimSpace(string(out))
-	if value == "" { return time.Time{}, fmt.Errorf("ref %q has no commits", ref) }
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil { return time.Time{}, fmt.Errorf("parse first commit time: %w", err) }
 	return t, nil
