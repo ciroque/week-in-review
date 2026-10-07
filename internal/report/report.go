@@ -40,6 +40,13 @@ func PeriodForWeekEnding(end time.Time, loc *time.Location) Period {
 	return Period{Start: start, End: end, EndExclusive: end.AddDate(0, 0, 1)}
 }
 
+func PeriodsThrough(firstCommit, through time.Time, loc *time.Location) []Period {
+	first := midnight(firstCommit.In(loc), loc)
+	last := midnight(through.In(loc), loc)
+	daysUntilSunday := (7 - int(last.Weekday())) % 7
+	return PeriodsFrom(first, last.AddDate(0, 0, daysUntilSunday), loc)
+}
+
 func PeriodsFrom(firstCommit, lastSunday time.Time, loc *time.Location) []Period {
 	first := midnight(firstCommit.In(loc), loc)
 	daysUntilSunday := (7 - int(first.Weekday())) % 7
