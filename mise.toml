@@ -1,6 +1,5 @@
 [tools]
 go = "1.23"
-git = "latest"
 
 [tasks.test]
 description = "Run the test suite"
