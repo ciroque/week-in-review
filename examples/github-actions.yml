@@ -1,0 +1,37 @@
+name: Week in Review
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  week-in-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate week in review
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            ghcr.io/ciroque/week-in-review:latest \
+            --repo /repo
+
+      - name: Commit journal update
+        run: |
+          if git diff --quiet -- WEEK-IN-REVIEW.md; then
+            echo "No journal changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WEEK-IN-REVIEW.md
+          git commit -m "Update week in review"
+          git push
