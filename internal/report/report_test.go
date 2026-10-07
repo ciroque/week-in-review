@@ -52,6 +52,53 @@ func TestDefaultOnSundayUsesPriorSunday(t *testing.T) {
 	}
 }
 
+func TestInitCreatesEmptyJournal(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "WEEK-IN-REVIEW.md")
+
+	if err := Init(path, "America/Los_Angeles"); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(body)
+
+	for _, want := range []string{
+		"# Week in Review",
+		"append-only chronological project journal",
+		"Reporting timezone: `America/Los_Angeles`.",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in:\n%s", want, text)
+		}
+	}
+
+	if strings.Contains(text, "## Week of") {
+		t.Fatalf("initialized journal unexpectedly contains a weekly entry:\n%s", text)
+	}
+}
+
+func TestInitRefusesToOverwriteExistingJournal(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "WEEK-IN-REVIEW.md")
+	if err := os.WriteFile(path, []byte("existing\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Init(path, "UTC"); err == nil {
+		t.Fatal("expected existing-file error")
+	}
+
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "existing\n" {
+		t.Fatalf("existing journal was modified: %q", body)
+	}
+}
+
 func TestAppendCreatesJournalAndRejectsDuplicate(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "WEEK-IN-REVIEW.md")
