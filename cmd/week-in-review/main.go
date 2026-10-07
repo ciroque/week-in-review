@@ -20,7 +20,7 @@ func main() {
 	flag.StringVar(&timezone, "timezone", "America/Los_Angeles", "IANA timezone used for reporting boundaries")
 	flag.StringVar(&weekEnding, "week-ending", "", "Sunday ending the reporting week, YYYY-MM-DD; defaults to the most recently completed Sunday")
 	flag.StringVar(&ref, "ref", "HEAD", "Git ref to inspect")
-	flag.BoolVar(&initJournal, "init", false, "Build a new journal from repository history through the most recently completed week")
+	flag.BoolVar(&initJournal, "init", false, "Build a new journal from all repository history, including the current week")
 	flag.Parse()
 
 	loc, err := time.LoadLocation(timezone)
@@ -36,10 +36,8 @@ func main() {
 		if weekEnding != "" { fatalf("--week-ending cannot be used with --init") }
 		first, err := repo.FirstCommitTime(ref)
 		if err != nil { fatalf("find first commit: %v", err) }
-		lastSunday, err := report.ResolveWeekEnding(time.Now(), loc, "")
-		if err != nil { fatalf("resolve reporting period: %v", err) }
 
-		periods := report.PeriodsFrom(first, lastSunday, loc)
+		periods := report.PeriodsThrough(first, time.Now(), loc)
 		entries := make([]report.Entry, 0, len(periods))
 		for _, period := range periods {
 			activity, err := repo.Activity(ref, period.Start, period.EndExclusive)
