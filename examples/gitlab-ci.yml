@@ -1,0 +1,29 @@
+week-in-review:
+  image:
+    name: ghcr.io/ciroque/week-in-review:latest
+    entrypoint: [""]
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+  variables:
+    GIT_DEPTH: "0"
+
+  before_script:
+    - apk add --no-cache openssh-client
+
+  script:
+    - week-in-review --repo "$CI_PROJECT_DIR"
+    - |
+      if git diff --quiet -- WEEK-IN-REVIEW.md; then
+        echo "No journal changes."
+        exit 0
+      fi
+    - git config user.name "GitLab CI"
+    - git config user.email "gitlab-ci@${CI_SERVER_HOST}"
+    - git add WEEK-IN-REVIEW.md
+    - git commit -m "Update week in review"
+    # Requires WEEK_IN_REVIEW_PUSH_TOKEN with write_repository permission.
+    - git remote set-url origin "https://oauth2:${WEEK_IN_REVIEW_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git push origin "HEAD:${CI_DEFAULT_BRANCH}"
