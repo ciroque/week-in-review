@@ -49,6 +49,20 @@ func PeriodForWeekEnding(end time.Time, loc *time.Location) Period {
 	}
 }
 
+func Init(path, timezone string) error {
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("%s already exists; refusing to overwrite it", path)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, []byte(journalHeader(timezone)), 0o644)
+}
+
 func Append(path, timezone string, period Period, activity gitrepo.Activity, generated time.Time) error {
 	existing, err := os.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
@@ -74,7 +88,7 @@ func Append(path, timezone string, period Period, activity gitrepo.Activity, gen
 	defer f.Close()
 
 	if len(existing) == 0 {
-		if _, err := fmt.Fprintf(f, "# Week in Review\n\nThis document is an append-only chronological project journal generated entirely from objective repository metadata.\n\nGit history is the source of truth. Entries are generated automatically and previously recorded weeks are not regenerated or modified.\n\nReporting timezone: %s.\n\n---\n", code(timezone)); err != nil {
+		if _, err := f.WriteString(journalHeader(timezone)); err != nil {
 			return err
 		}
 	}
@@ -107,6 +121,10 @@ func Append(path, timezone string, period Period, activity gitrepo.Activity, gen
 
 	_, err = f.WriteString(b.String())
 	return err
+}
+
+func journalHeader(timezone string) string {
+	return fmt.Sprintf("# Week in Review\n\nThis document is an append-only chronological project journal generated entirely from objective repository metadata.\n\nGit history is the source of truth. Entries are generated automatically and previously recorded weeks are not regenerated or modified.\n\nReporting timezone: %s.\n\n---\n", code(timezone))
 }
 
 func weekHeader(period Period) string {
