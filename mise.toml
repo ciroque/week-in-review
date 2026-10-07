@@ -1,0 +1,19 @@
+[tools]
+go = "1.23"
+git = "latest"
+
+[tasks.test]
+description = "Run the test suite"
+run = "go test ./..."
+
+[tasks.vet]
+description = "Run go vet"
+run = "go vet ./..."
+
+[tasks.build]
+description = "Build week-in-review"
+run = "go build ./cmd/week-in-review"
+
+[tasks.check]
+description = "Run all non-container validation"
+depends = ["test", "vet", "build"]
