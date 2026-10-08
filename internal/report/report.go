@@ -108,8 +108,8 @@ func renderEntry(period Period, activity gitrepo.Activity, generated time.Time) 
 		if len(short) > 7 { short = short[:7] }
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n",
 			code(c.CommitTime.Format(time.RFC3339)), code(c.AuthorTime.Format(time.RFC3339)),
-			code(short), escape(c.Author), escape(c.Subject))
-		fmt.Fprintf(&b, "<!-- commit: %s -->\n", c.SHA)
+			code(c.SHA), escape(c.Author), escape(c.Subject))
+		
 	}
 	fmt.Fprintf(&b, "\n### Activity\n\n- **Commits:** %d\n- **Files changed:** %d\n- **Lines added:** %d\n- **Lines removed:** %d\n\n---\n",
 		len(activity.Commits), activity.FilesChanged, activity.LinesAdded, activity.LinesRemoved)
