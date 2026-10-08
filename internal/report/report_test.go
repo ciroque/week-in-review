@@ -101,7 +101,7 @@ func TestInitBuildsHistoryAndRefusesOverwrite(t *testing.T) {
 	body, err := os.ReadFile(path)
 	if err != nil { t.Fatal(err) }
 	text := string(body)
-	for _, want := range []string{"# Week in Review", "## Week of 2026-10-05 through 2026-10-11", "`1234567`"} {
+	for _, want := range []string{"# Week in Review", "## Week of 2026-10-05 through 2026-10-11", "`1234567890abcdef`"} {
 		if !strings.Contains(text, want) { t.Fatalf("missing %q in:\n%s", want, text) }
 	}
 	if err := Init(path, "UTC", entries, time.Now()); err == nil {
@@ -143,7 +143,7 @@ func TestAppendCreatesJournalAndRejectsDuplicate(t *testing.T) {
 	for _, want := range []string{
 		"append-only chronological project journal",
 		"## Week of 2026-10-05 through 2026-10-11",
-		"`1234567`",
+		"`1234567890abcdef`",
 		"A \\| B",
 		"Do \\| thing",
 		"**Commits:** 1",
@@ -152,6 +152,8 @@ func TestAppendCreatesJournalAndRejectsDuplicate(t *testing.T) {
 			t.Fatalf("missing %q in:\n%s", want, text)
 		}
 	}
+
+	if strings.Contains(text, "<!-- commit:") { t.Fatal("HTML comments must not interrupt Markdown table rows") }
 
 	if err := Append(path, "UTC", period, activity, time.Now()); err == nil {
 		t.Fatal("expected duplicate-week error")
